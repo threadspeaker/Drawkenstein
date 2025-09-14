@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pass & Play Drawing Game</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .game-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 8px;
+            min-width: 120px;
+            min-height: 44px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .drawing-tools {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .tool-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .canvas-container {
+            margin: 24px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        canvas {
+            border: 3px solid #e5e7eb;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            touch-action: none;
+        }
+        
+        .player-indicator {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .player-1 { color: #ef4444; }
+        .player-2 { color: #3b82f6; }
+        
+        .combined-image {
+            border: 3px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            max-width: 100%;
+            margin: 24px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .title { font-size: 2rem; }
+            .game-card { padding: 24px; }
+            .drawing-tools { flex-direction: column; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        // Drawing Canvas Component
+        const DrawingCanvas = ({ onSave, playerNumber }) => {
+            const canvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+            const [currentColor, setCurrentColor] = useState('#000000');
+            const [brushSize, setBrushSize] = useState(3);
+
+            const CANVAS_WIDTH = 600;
+            const CANVAS_HEIGHT = 450;
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                
+                const context = canvas.getContext('2d');
+                context.lineCap = 'round';
+                context.lineJoin = 'round';
+                context.strokeStyle = currentColor;
+                context.lineWidth = brushSize;
+            }, [currentColor, brushSize]);
+
+            const getEventPos = (e) => {
+                const canvas = canvasRef.current;
+                const rect = canvas.getBoundingClientRect();
+                
+                const clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0]?.clientY);
+                
+                const scaleX = CANVAS_WIDTH / rect.width;
+                const scaleY = CANVAS_HEIGHT / rect.height;
+                
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            };
+
+            const startDrawing = (e) => {
+                e.preventDefault();
+                setIsDrawing(true);
+                const { x, y } = getEventPos(e);
+                
+                const context = canvasRef.current.getContext('2d');
+                context.beginPath();
+                context.moveTo(x, y);
+            };
+
+            const draw = (e) => {
+                if (!isDrawing) return;
+                e.preventDefault();
+                
+                const { x, y } = getEventPos(e);
+                const context = canvasRef.current.getContext('2d');
+                context.lineTo(x, y);
+                context.stroke();
+            };
+
+            const stopDrawing = (e) => {
+                e.preventDefault();
+                setIsDrawing(false);
+            };
+
+            const clearCanvas = () => {
+                const canvas = canvasRef.current;
+                const context = canvas.getContext('2d');
+                context.clearRect(0, 0, canvas.width, canvas.height);
+            };
+
+            const saveDrawing = () => {
+                const canvas = canvasRef.current;
+                const imageData = canvas.toDataURL('image/png');
+                onSave(imageData);
+            };
+
+            return (
+                <div>
+                    <div className={`player-indicator player-${playerNumber}`}>
+                        Player {playerNumber}: Draw the {playerNumber === 1 ? 'TOP' : 'BOTTOM'} half
+                    </div>
+                    
+                    <div className="drawing-tools">
+                        <div className="tool-group">
+                            <label>Color:</label>
+                            <input
+                                type="color"
+                                value={currentColor}
+                                onChange={(e) => setCurrentColor(e.target.value)}
+                                style={{ width: '40px', height: '40px', border: 'none', borderRadius: '8px' }}
+                            />
+                        </div>
+                        
+                        <div className="tool-group">
+                            <label>Size:</label>
+                            <input
+                                type="range"
+                                min="1"
+                                max="20"
+                                value={brushSize}
+                                onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                                style={{ width: '100px' }}
+                            />
+                            <span>{brushSize}px</span>
+                        </div>
+                        
+                        <button onClick={clearCanvas} className="btn btn-secondary">
+                            Clear
+                        </button>
+                    </div>
+
+                    <div className="canvas-container">
+                        <canvas
+                            ref={canvasRef}
+                            width={CANVAS_WIDTH}
+                            height={CANVAS_HEIGHT}
+                            onMouseDown={startDrawing}
+                            onMouseMove={draw}
+                            onMouseUp={stopDrawing}
+                            onMouseLeave={stopDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
+                            onTouchEnd={stopDrawing}
+                            style={{ 
+                                width: '100%', 
+                                maxWidth: '600px', 
+                                height: 'auto',
+                                cursor: 'crosshair'
+                            }}
+                        />
+                    </div>
+
+                    <button onClick={saveDrawing} className="btn">
+                        Submit Drawing
+                    </button>
+                </div>
+            );
+        };
+
+        // Main Game Component
+        const Game = () => {
+            const [gameState, setGameState] = useState('start'); // start, player1, handoff, player2, results
+            const [player1Drawing, setPlayer1Drawing] = useState(null);
+            const [player2Drawing, setPlayer2Drawing] = useState(null);
+            const [combinedImage, setCombinedImage] = useState(null);
+
+            const combineImages = (topImage, bottomImage) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = 600;
+                canvas.height = 900; // 450 * 2
+                
+                return new Promise((resolve) => {
+                    const img1 = new Image();
+                    const img2 = new Image();
+                    let loaded = 0;
+                    
+                    const onLoad = () => {
+                        loaded++;
+                        if (loaded === 2) {
+                            // Draw top image
+                            ctx.drawImage(img1, 0, 0);
+                            // Draw bottom image
+                            ctx.drawImage(img2, 0, 450);
+                            
+                            resolve(canvas.toDataURL('image/png'));
+                        }
+                    };
+                    
+                    img1.onload = onLoad;
+                    img2.onload = onLoad;
+                    img1.src = topImage;
+                    img2.src = bottomImage;
+                });
+            };
+
+            const startGame = () => {
+                setGameState('player1');
+                setPlayer1Drawing(null);
+                setPlayer2Drawing(null);
+                setCombinedImage(null);
+            };
+
+            const handlePlayer1Save = (imageData) => {
+                setPlayer1Drawing(imageData);
+                setGameState('handoff');
+            };
+
+            const proceedToPlayer2 = () => {
+                setGameState('player2');
+            };
+
+            const handlePlayer2Save = async (imageData) => {
+                setPlayer2Drawing(imageData);
+                const combined = await combineImages(player1Drawing, imageData);
+                setCombinedImage(combined);
+                setGameState('results');
+            };
+
+            const renderCurrentState = () => {
+                switch (gameState) {
+                    case 'start':
+                        return (
+                            <div>
+                                <h1 className="title">Pass & Play Drawing</h1>
+                                <p className="subtitle">
+                                    Two players, one device, endless creativity!
+                                </p>
+                                <p style={{ marginBottom: '2rem', color: '#6b7280' }}>
+                                    Player 1 draws the top half, Player 2 draws the bottom half.
+                                    <br />See what amazing creation you make together!
+                                </p>
+                                <button onClick={startGame} className="btn">
+                                    Start Game
+                                </button>
+                            </div>
+                        );
+
+                    case 'player1':
+                        return (
+                            <DrawingCanvas 
+                                onSave={handlePlayer1Save} 
+                                playerNumber={1}
+                            />
+                        );
+
+                    case 'handoff':
+                        return (
+                            <div>
+                                <h2 className="title">Pass the Device!</h2>
+                                <p className="subtitle">
+                                    Player 1 has finished drawing the top half.
+                                    <br />Hand the device to Player 2.
+                                </p>
+                                <button onClick={proceedToPlayer2} className="btn">
+                                    Player 2 Ready
+                                </button>
+                            </div>
+                        );
+
+                    case 'player2':
+                        return (
+                            <DrawingCanvas 
+                                onSave={handlePlayer2Save} 
+                                playerNumber={2}
+                            />
+                        );
+
+                    case 'results':
+                        return (
+                            <div>
+                                <h2 className="title">Your Masterpiece!</h2>
+                                <p className="subtitle">Here's what you created together:</p>
+                                
+                                {combinedImage && (
+                                    <img 
+                                        src={combinedImage} 
+                                        alt="Combined drawing" 
+                                        className="combined-image"
+                                    />
+                                )}
+                                
+                                <div>
+                                    <button onClick={startGame} className="btn">
+                                        Play Again
+                                    </button>
+                                </div>
+                            </div>
+                        );
+
+                    default:
+                        return null;
+                }
+            };
+
+            return (
+                <div className="container">
+                    <div className="game-card">
+                        {renderCurrentState()}
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(<Game />, document.getElementById('root'));
+    </script>
+</body>
+</html>
