@@ -486,6 +486,13 @@
                 });
             };
 
+            const reset = () => {
+                setGameState('start');
+                setPlayer1Drawing(null);
+                setPlayer2Drawing(null);
+                setCombinedImage(null);
+            };
+
             const startGame = () => {
                 setGameState('player1');
                 setPlayer1Drawing(null);
@@ -593,7 +600,7 @@
                                 )}
 
                                 <div>
-                                    <button onClick={startGame} className="btn">
+                                    <button onClick={reset} className="btn">
                                         Play Again
                                     </button>
                                 </div>
