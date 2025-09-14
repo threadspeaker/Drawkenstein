@@ -460,6 +460,10 @@
                 setPlayer2Drawing(imageData);
                 const combined = await combineImages(player1Drawing, imageData);
                 setCombinedImage(combined);
+                setGameState('reveal');
+            };
+
+            const proceedToResults = () => {
                 setGameState('results');
             };
 
@@ -468,12 +472,12 @@
                     case 'start':
                         return (
                             <div>
-                                <h1 className="title">Pass & Play Drawing</h1>
+                                <h1 className="title">Welcome to Drawkenstein</h1>
                                 <p className="subtitle">
                                     Two players, one device, endless creativity!
                                 </p>
                                 <p style={{ marginBottom: '2rem', color: '#6b7280' }}>
-                                    Player 1 draws the top half, Player 2 draws the bottom half.
+                                    Each player will create half of an image.
                                     <br />See what amazing creation you make together!
                                 </p>
                                 <button onClick={startGame} className="btn">
@@ -510,6 +514,20 @@
                                 onSave={handlePlayer2Save} 
                                 playerNumber={2}
                             />
+                        );
+
+                    case 'reveal':
+                        return (
+                            <div>
+                                <h2 className="title">Get Ready!</h2>
+                                <p className="subtitle">
+                                    Both players have finished drawing!
+                                    <br />Come together to see your amazing creation.
+                                </p>
+                                <button onClick={proceedToResults} className="btn">
+                                    Reveal Masterpiece
+                                </button>
+                            </div>
                         );
 
                     case 'results':
