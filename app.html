@@ -90,6 +90,52 @@
             gap: 8px;
         }
         
+        .size-button {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .size-button.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .size-button:hover {
+            border-color: #667eea;
+        }
+        
+        .size-circle {
+            background: #374151;
+            border-radius: 50%;
+        }
+        
+        .color-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .color-button.active {
+            border-color: #374151;
+            border-width: 3px;
+            transform: scale(1.1);
+        }
+        
+        .color-button:hover {
+            transform: scale(1.05);
+        }
+        
         .canvas-container {
             margin: 24px 0;
             display: flex;
@@ -136,10 +182,55 @@
 
         // Drawing Canvas Component
         const DrawingCanvas = ({ onSave, playerNumber }) => {
+            const COLORS = [
+                {
+                    "name": "Black",
+                    "value": "#000000"
+                },
+                {
+                    "name": "Gray",
+                    "value": "#d3d3d3"
+                },
+                {
+                    "name": "White",
+                    "value": "#FFFFFF"
+                },
+                {
+                    "name": "Red",
+                    "value": "#FF0000"
+                },
+                {
+                    "name": "Orange",
+                    "value": "#ff8c00"
+                },
+                {
+                    "name": "Yellow",
+                    "value": "#FFFF00"
+                },
+                {
+                    "name": "Green",
+                    "value": "#00FF00"
+                },
+                {
+                    "name": "Blue",
+                    "value": "#0000FF"
+                },
+                {
+                    "name": "Purple",
+                    "value": "#FF00FF"
+                }
+            ];
+
+            const BRUSH_SIZES = {
+                SMALL: 10,
+                MEDIUM: 15,
+                LARGE: 20
+            };
+
             const canvasRef = useRef(null);
             const [isDrawing, setIsDrawing] = useState(false);
-            const [currentColor, setCurrentColor] = useState('#000000');
-            const [brushSize, setBrushSize] = useState(3);
+            const [currentColor, setCurrentColor] = useState(COLORS[0].value);
+            const [brushSize, setBrushSize] = useState(BRUSH_SIZES.MEDIUM);
 
             const CANVAS_WIDTH = 600;
             const CANVAS_HEIGHT = 450;
@@ -208,51 +299,6 @@
                 onSave(imageData);
             };
 
-            const COLORS = [
-                {
-                    "name": "Black",
-                    "value": "#000000"
-                },
-                {
-                    "name": "Gray",
-                    "value": "#d3d3d3"
-                },
-                {
-                    "name": "White",
-                    "value": "#FFFFFF"
-                },
-                {
-                    "name": "Red",
-                    "value": "#FF0000"
-                },
-                {
-                    "name": "Orange",
-                    "value": "#ff8c00"
-                },
-                {
-                    "name": "Yellow",
-                    "value": "#FFFF00"
-                },
-                {
-                    "name": "Green",
-                    "value": "#00FF00"
-                },
-                {
-                    "name": "Blue",
-                    "value": "#0000FF"
-                },
-                {
-                    "name": "Purple",
-                    "value": "#FF00FF"
-                },
-            ]
-
-            const BRUSH_SIZES = {
-                SMALL: 10,
-                MEDIUM: 15,
-                LARGE: 20
-            }
-
             return (
                 <div>
                     <div className={`player-indicator player-${playerNumber}`}>
@@ -270,7 +316,7 @@
                                         className={`color-button ${currentColor === color.value ? 'active' : ''}`}
                                         style={{ 
                                             backgroundColor: color.value,
-                                            border: color.value === '#ffffff' ? '2px solid #e5e7eb' : `2px solid ${color.value === currentColor ? '#374151' : '#e5e7eb'}`
+                                            border: color.value === '#FFFFFF' ? '2px solid #e5e7eb' : `2px solid ${color.value === currentColor ? '#374151' : '#e5e7eb'}`
                                         }}
                                         title={color.name}
                                     />
