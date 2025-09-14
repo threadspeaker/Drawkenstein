@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +15,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-        
+
         .container {
             min-height: 100vh;
             display: flex;
@@ -22,17 +23,17 @@
             justify-content: center;
             padding: 20px;
         }
-        
+
         .game-card {
             background: white;
             border-radius: 16px;
             padding: 32px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             text-align: center;
             max-width: 900px;
             width: 100%;
         }
-        
+
         .title {
             font-size: 2.5rem;
             font-weight: bold;
@@ -42,13 +43,13 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         .subtitle {
             font-size: 1.2rem;
             color: #6b7280;
             margin-bottom: 2rem;
         }
-        
+
         .btn {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -62,16 +63,16 @@
             min-width: 120px;
             min-height: 44px;
         }
-        
+
         .btn:hover {
             transform: translateY(-2px);
         }
-        
+
         .btn-secondary {
             background: #e5e7eb;
             color: #374151;
         }
-        
+
         .drawing-tools {
             display: flex;
             flex-wrap: wrap;
@@ -83,13 +84,13 @@
             border-radius: 12px;
             margin-bottom: 24px;
         }
-        
+
         .tool-group {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        
+
         .size-button {
             background: white;
             border: 2px solid #e5e7eb;
@@ -102,21 +103,21 @@
             justify-content: center;
             transition: all 0.2s;
         }
-        
+
         .size-button.active {
             border-color: #667eea;
             background: #f0f4ff;
         }
-        
+
         .size-button:hover {
             border-color: #667eea;
         }
-        
+
         .size-circle {
             background: #374151;
             border-radius: 50%;
         }
-        
+
         .color-button {
             width: 40px;
             height: 40px;
@@ -125,55 +126,70 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         .color-button.active {
             border-color: #374151;
             border-width: 3px;
             transform: scale(1.1);
         }
-        
+
         .color-button:hover {
             transform: scale(1.05);
         }
-        
+
         .canvas-container {
             margin: 24px 0;
             display: flex;
             justify-content: center;
         }
-        
+
         canvas {
             border: 3px solid #e5e7eb;
             border-radius: 12px;
             background: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             touch-action: none;
         }
-        
+
         .player-indicator {
             font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 1rem;
         }
-        
-        .player-1 { color: #ef4444; }
-        .player-2 { color: #3b82f6; }
-        
+
+        .player-1 {
+            color: #ef4444;
+        }
+
+        .player-2 {
+            color: #3b82f6;
+        }
+
         .combined-image {
             border: 3px solid #e5e7eb;
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
             max-width: 100%;
             margin: 24px 0;
         }
-        
+
         @media (max-width: 768px) {
-            .title { font-size: 2rem; }
-            .game-card { padding: 24px; }
-            .drawing-tools { flex-direction: column; gap: 12px; }
+            .title {
+                font-size: 2rem;
+            }
+
+            .game-card {
+                padding: 24px;
+            }
+
+            .drawing-tools {
+                flex-direction: column;
+                gap: 12px;
+            }
         }
     </style>
 </head>
+
 <body>
     <div id="root"></div>
 
@@ -181,7 +197,7 @@
         const { useState, useRef, useEffect } = React;
 
         // Drawing Canvas Component
-        const DrawingCanvas = ({ onSave, playerNumber }) => {
+        const DrawingCanvas = ({ onSave, playerNumber, side }) => {
             const COLORS = [
                 {
                     "name": "Black",
@@ -235,11 +251,40 @@
             const CANVAS_WIDTH = 600;
             const CANVAS_HEIGHT = 450;
 
+            const drawGuidelines = (context, width, height, side) => {
+                context.save();
+                context.strokeStyle = '#d1d5db';
+                context.lineWidth = 2;
+                context.setLineDash([6, 6]);
+                if (side === "top") {
+                    // Bottom edge into thirds
+                    for (let i = 1; i <= 2; i++) {
+                        const x = (width / 3) * i;
+                        context.beginPath();
+                        context.moveTo(x, height - 20);
+                        context.lineTo(x, height);
+                        context.stroke();
+                    }
+                } else if (side === "bottom") {
+                    // Top edge into thirds
+                    for (let i = 1; i <= 2; i++) {
+                        const x = (width / 3) * i;
+                        context.beginPath();
+                        context.moveTo(x, 0);
+                        context.lineTo(x, 20);
+                        context.stroke();
+                    }
+                }
+                context.setLineDash([]);
+                context.restore();
+            };
+
             useEffect(() => {
                 const canvas = canvasRef.current;
                 if (!canvas) return;
-                
+
                 const context = canvas.getContext('2d');
+                drawGuidelines(context, CANVAS_WIDTH, CANVAS_HEIGHT, side);
                 context.lineCap = 'round';
                 context.lineJoin = 'round';
                 context.strokeStyle = currentColor;
@@ -249,13 +294,13 @@
             const getEventPos = (e) => {
                 const canvas = canvasRef.current;
                 const rect = canvas.getBoundingClientRect();
-                
+
                 const clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0]?.clientY);
-                
+
                 const scaleX = CANVAS_WIDTH / rect.width;
                 const scaleY = CANVAS_HEIGHT / rect.height;
-                
+
                 return {
                     x: (clientX - rect.left) * scaleX,
                     y: (clientY - rect.top) * scaleY
@@ -266,7 +311,7 @@
                 e.preventDefault();
                 setIsDrawing(true);
                 const { x, y } = getEventPos(e);
-                
+
                 const context = canvasRef.current.getContext('2d');
                 context.beginPath();
                 context.moveTo(x, y);
@@ -275,7 +320,7 @@
             const draw = (e) => {
                 if (!isDrawing) return;
                 e.preventDefault();
-                
+
                 const { x, y } = getEventPos(e);
                 const context = canvasRef.current.getContext('2d');
                 context.lineTo(x, y);
@@ -291,6 +336,7 @@
                 const canvas = canvasRef.current;
                 const context = canvas.getContext('2d');
                 context.clearRect(0, 0, canvas.width, canvas.height);
+                drawGuidelines(context, CANVAS_WIDTH, CANVAS_HEIGHT, side);
             };
 
             const saveDrawing = () => {
@@ -302,9 +348,9 @@
             return (
                 <div>
                     <div className={`player-indicator player-${playerNumber}`}>
-                        Player {playerNumber}: Draw the {playerNumber === 1 ? 'TOP' : 'BOTTOM'} half
+                        Player {playerNumber}: Draw the {side.toUpperCase()} half
                     </div>
-                    
+
                     <div className="drawing-tools">
                         <div className="tool-group">
                             <label>Colors:</label>
@@ -314,7 +360,7 @@
                                         key={color.value}
                                         onClick={() => setCurrentColor(color.value)}
                                         className={`color-button ${currentColor === color.value ? 'active' : ''}`}
-                                        style={{ 
+                                        style={{
                                             backgroundColor: color.value,
                                             border: color.value === '#FFFFFF' ? '2px solid #e5e7eb' : `2px solid ${color.value === currentColor ? '#374151' : '#e5e7eb'}`
                                         }}
@@ -323,7 +369,7 @@
                                 ))}
                             </div>
                         </div>
-                        
+
                         <div className="tool-group">
                             <label>Brush Size:</label>
                             <div style={{ display: 'flex', gap: '8px' }}>
@@ -332,11 +378,11 @@
                                     className={`size-button ${brushSize === BRUSH_SIZES.SMALL ? 'active' : ''}`}
                                     title={`Small (${BRUSH_SIZES.SMALL}px)`}
                                 >
-                                    <div 
-                                        className="size-circle" 
-                                        style={{ 
-                                            width: `${BRUSH_SIZES.SMALL + 4}px`, 
-                                            height: `${BRUSH_SIZES.SMALL + 4}px` 
+                                    <div
+                                        className="size-circle"
+                                        style={{
+                                            width: `${BRUSH_SIZES.SMALL + 4}px`,
+                                            height: `${BRUSH_SIZES.SMALL + 4}px`
                                         }}
                                     />
                                 </button>
@@ -345,11 +391,11 @@
                                     className={`size-button ${brushSize === BRUSH_SIZES.MEDIUM ? 'active' : ''}`}
                                     title={`Medium (${BRUSH_SIZES.MEDIUM}px)`}
                                 >
-                                    <div 
-                                        className="size-circle" 
-                                        style={{ 
-                                            width: `${BRUSH_SIZES.MEDIUM + 4}px`, 
-                                            height: `${BRUSH_SIZES.MEDIUM + 4}px` 
+                                    <div
+                                        className="size-circle"
+                                        style={{
+                                            width: `${BRUSH_SIZES.MEDIUM + 4}px`,
+                                            height: `${BRUSH_SIZES.MEDIUM + 4}px`
                                         }}
                                     />
                                 </button>
@@ -358,17 +404,17 @@
                                     className={`size-button ${brushSize === BRUSH_SIZES.LARGE ? 'active' : ''}`}
                                     title={`Large (${BRUSH_SIZES.LARGE}px)`}
                                 >
-                                    <div 
-                                        className="size-circle" 
-                                        style={{ 
-                                            width: `${BRUSH_SIZES.LARGE + 4}px`, 
-                                            height: `${BRUSH_SIZES.LARGE + 4}px` 
+                                    <div
+                                        className="size-circle"
+                                        style={{
+                                            width: `${BRUSH_SIZES.LARGE + 4}px`,
+                                            height: `${BRUSH_SIZES.LARGE + 4}px`
                                         }}
                                     />
                                 </button>
                             </div>
                         </div>
-                        
+
                         <button onClick={clearCanvas} className="btn btn-secondary">
                             Clear
                         </button>
@@ -386,9 +432,9 @@
                             onTouchStart={startDrawing}
                             onTouchMove={draw}
                             onTouchEnd={stopDrawing}
-                            style={{ 
-                                width: '100%', 
-                                maxWidth: '600px', 
+                            style={{
+                                width: '100%',
+                                maxWidth: '600px',
                                 height: 'auto',
                                 cursor: 'crosshair'
                             }}
@@ -412,15 +458,15 @@
             const combineImages = (topImage, bottomImage) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                
+
                 canvas.width = 600;
                 canvas.height = 900; // 450 * 2
-                
+
                 return new Promise((resolve) => {
                     const img1 = new Image();
                     const img2 = new Image();
                     let loaded = 0;
-                    
+
                     const onLoad = () => {
                         loaded++;
                         if (loaded === 2) {
@@ -428,11 +474,11 @@
                             ctx.drawImage(img1, 0, 0);
                             // Draw bottom image
                             ctx.drawImage(img2, 0, 450);
-                            
+
                             resolve(canvas.toDataURL('image/png'));
                         }
                     };
-                    
+
                     img1.onload = onLoad;
                     img2.onload = onLoad;
                     img1.src = topImage;
@@ -488,9 +534,10 @@
 
                     case 'player1':
                         return (
-                            <DrawingCanvas 
-                                onSave={handlePlayer1Save} 
+                            <DrawingCanvas
+                                onSave={handlePlayer1Save}
                                 playerNumber={1}
+                                side="top"
                             />
                         );
 
@@ -510,9 +557,10 @@
 
                     case 'player2':
                         return (
-                            <DrawingCanvas 
-                                onSave={handlePlayer2Save} 
+                            <DrawingCanvas
+                                onSave={handlePlayer2Save}
                                 playerNumber={2}
+                                side="bottom"
                             />
                         );
 
@@ -535,15 +583,15 @@
                             <div>
                                 <h2 className="title">Your Masterpiece!</h2>
                                 <p className="subtitle">Here's what you created together:</p>
-                                
+
                                 {combinedImage && (
-                                    <img 
-                                        src={combinedImage} 
-                                        alt="Combined drawing" 
+                                    <img
+                                        src={combinedImage}
+                                        alt="Combined drawing"
                                         className="combined-image"
                                     />
                                 )}
-                                
+
                                 <div>
                                     <button onClick={startGame} className="btn">
                                         Play Again
@@ -570,4 +618,5 @@
         ReactDOM.render(<Game />, document.getElementById('root'));
     </script>
 </body>
+
 </html>
